@@ -1,0 +1,17 @@
+name: guard-main
+# Make `source-branch` a required status check on main: PRs may only come from staging or hotfix/*.
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          HEAD: ${{ github.head_ref }}
+        run: |
+          case "$HEAD" in
+            staging|hotfix/*) ;;
+            *) echo "::error::PRs into main must come from staging or hotfix/*, not '$HEAD'"; exit 1 ;;
+          esac

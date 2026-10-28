@@ -1,0 +1,101 @@
+name: swarm
+
+services:
+  # copies default configs + generates the SSH key into /DATA/AppData/swarm on first run
+  # (ZimaOS doc: no single-file bind mounts, so seed whole directories with an init container)
+  seed:
+    image: ghcr.io/n0t10n/swarm-orchestrator:0.1.0
+    command: python main.py seed
+    restart: "no"
+    volumes:
+      - type: bind
+        source: /DATA/AppData/swarm/config
+        target: /config
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: litellm
+      POSTGRES_DB: litellm
+    volumes:
+      - type: bind
+        source: /DATA/AppData/swarm/postgres
+        target: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm"]
+      interval: 5s
+      retries: 10
+
+  # internal only: not published, the orchestrator is the single entry point
+  litellm:
+    image: ghcr.io/berriai/litellm-database:main-stable
+    restart: unless-stopped
+    command: ["--config", "/config/litellm.yaml", "--port", "4000"]
+    environment:
+      DATABASE_URL: postgresql://litellm:litellm@postgres:5432/litellm
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      TOGETHERAI_API_KEY: ${TOGETHERAI_API_KEY}
+    volumes:
+      - type: bind
+        source: /DATA/AppData/swarm/config
+        target: /config
+        read_only: true
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+
+  orchestrator:
+    image: ghcr.io/n0t10n/swarm-orchestrator:0.1.0
+    restart: unless-stopped
+    environment:
+      LITELLM_URL: http://litellm:4000/v1
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      SWARM_TOKEN: ${SWARM_TOKEN}
+      HISTORY_RESPONSES: ${HISTORY_RESPONSES:-20}
+      SUMMARY_EVERY: ${SUMMARY_EVERY:-5}
+      SUMMARY_MODEL: ${SUMMARY_MODEL:-llama-70b}
+    # tailnet names (MagicDNS) resolve through tailscaled on the host
+    dns:
+      - 100.100.100.100
+    # set SWARM_BIND to the server's tailscale IP (tailscale ip -4) to hide it from the LAN
+    ports:
+      - target: 8787
+        published: ${WEBUI_PORT:-8787}
+        host_ip: ${SWARM_BIND:-0.0.0.0}
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: /DATA/AppData/swarm/config
+        target: /config
+      - type: bind
+        source: /DATA/AppData/swarm/data
+        target: /data
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+      litellm:
+        condition: service_started
+
+x-casaos:
+  id: io.github.change-me.swarm
+  architectures: [amd64]
+  version: "0.1.0"
+  main: orchestrator
+  author: marcos
+  category: Developer
+  developer: marcos
+  title:
+    en_US: Swarm
+  tagline:
+    en_US: Opus plans, cheap Together.ai models do the work
+  description:
+    en_US: LiteLLM gateway plus an orchestrator where a Claude Opus brain delegates to a swarm of cheaper models and reads your machines over SSH. Reach it through Tailscale.
+  icon: https://example.com/swarm/icon.png
+  thumbnail: https://example.com/swarm/thumbnail.png
+  index: /docs
+  port_map: ${WEBUI_PORT:-8787}
