@@ -10,7 +10,9 @@ from pydantic import BaseModel
 CFG = Path(os.getenv("CONFIG_DIR", "/config"))
 DATA = Path(os.getenv("DATA_DIR", "/data"))
 MAX_STEPS, MAX_OUT = 20, 20000  # tool-loop turns, chars returned per ssh call
-HISTORY = int(os.getenv("HISTORY_MESSAGES", "20"))  # past messages resent to the brain per request (keep even)
+HISTORY = int(os.getenv("HISTORY_RESPONSES", "20"))  # past responses (user+assistant pairs) kept after a summary
+SUMMARY_EVERY = int(os.getenv("SUMMARY_EVERY", "5"))  # responses added on top of HISTORY before summarizing
+SUMMARY_MODEL = os.getenv("SUMMARY_MODEL", "llama-70b")  # must be a model_name in litellm.yaml
 
 
 def seed():
@@ -111,13 +113,22 @@ context fits the input. Review and merge worker output; retry or switch model if
 
 Worker catalog:
 {models}
-Machines (SSH): {hosts}"""
+Machines (SSH): {hosts}{summary}"""
 
 
 def cache_tail(msgs):
     # one Anthropic cache breakpoint on the newest message: each loop step re-reads the prefix at ~10% price
     *head, last = msgs
     return [*head, {**last, "content": [{"type": "text", "text": last["content"], "cache_control": {"type": "ephemeral"}}]}]
+
+
+async def summarize(summary, old):
+    text = "\n".join(f"{m['role']}: {m['content']}" for m in old)
+    r = await llm.chat.completions.create(model=SUMMARY_MODEL, max_tokens=600, messages=[{"role": "user", "content":
+        "Update this running summary of a conversation with the new messages. Keep decisions, facts, file paths, "
+        "hosts and open tasks; drop chatter. Max 300 words, output only the summary.\n\n"
+        f"Summary so far:\n{summary or '(none)'}\n\nNew messages:\n{text}"}])
+    return r.choices[0].message.content
 
 
 class Ask(BaseModel):
@@ -133,18 +144,21 @@ def auth(authorization: str = Header("")):
 @app.post("/ask", dependencies=[Depends(auth)])
 async def ask(req: Ask):
     f = None
-    history = []
+    history, summary = [], ""
     if req.session:
         if not re.fullmatch(r"[\w-]+", req.session):
             raise HTTPException(400, "bad session id")
         f = DATA / "sessions" / f"{req.session}.json"
         f.parent.mkdir(parents=True, exist_ok=True)
-        if f.exists():  # ponytail: sliding window, summarize old turns with a worker if you need long memory
+        if f.exists():
             saved = json.loads(f.read_text())
-            history = saved[max(0, len(saved) - HISTORY):] if HISTORY else []
+            if isinstance(saved, list):  # file from before summaries existed
+                saved = {"summary": "", "messages": saved}
+            summary, history = saved["summary"], saved["messages"]
     turn = {"role": "user", "content": req.prompt}
     msgs = [{"role": "system", "content": SYSTEM.format(
-        models=yaml.safe_dump(models()), hosts={k: "exec" if v.get("exec") else "read-only" for k, v in hosts().items()})},
+        models=yaml.safe_dump(models()), hosts={k: "exec" if v.get("exec") else "read-only" for k, v in hosts().items()},
+        summary=f"\n\nSummary of the earlier conversation:\n{summary}" if summary else "")},
         *history, turn]
     usage = {"in": 0, "cached": 0, "out": 0}  # brain tokens only; workers are tracked by LiteLLM
     for _ in range(MAX_STEPS):
@@ -156,7 +170,17 @@ async def ask(req: Ask):
         msgs.append(m.model_dump(exclude_none=True))
         if not m.tool_calls:
             if f:
-                f.write_text(json.dumps([*history, turn, {"role": "assistant", "content": m.content}]))
+                kept = [*history, turn, {"role": "assistant", "content": m.content}]
+                # the window grows from HISTORY to HISTORY + SUMMARY_EVERY responses; then the oldest ones are
+                # summarized and deleted, so the brain sees HISTORY..HISTORY+SUMMARY_EVERY responses per request
+                n = len(kept) // 2
+                cut = 2 * (n - HISTORY) if n >= HISTORY + SUMMARY_EVERY else 0
+                old, kept = kept[:cut], kept[cut:]
+                try:  # the oldest messages become part of the summary instead of being resent every request
+                    summary = await summarize(summary, old) if old else summary
+                except Exception:  # ponytail: on failure keep everything and retry on the next request
+                    kept = [*history, turn, {"role": "assistant", "content": m.content}]
+                f.write_text(json.dumps({"summary": summary, "messages": kept}))
             return {"answer": m.content, "usage": usage}
         results = await asyncio.gather(*map(run_tool, m.tool_calls))
         msgs += [{"role": "tool", "tool_call_id": tc.id, "content": out} for tc, out in zip(m.tool_calls, results)]

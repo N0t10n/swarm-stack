@@ -56,6 +56,9 @@ services:
       LITELLM_URL: http://litellm:4000/v1
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       SWARM_TOKEN: ${SWARM_TOKEN}
+      HISTORY_RESPONSES: ${HISTORY_RESPONSES:-20}
+      SUMMARY_EVERY: ${SUMMARY_EVERY:-5}
+      SUMMARY_MODEL: ${SUMMARY_MODEL:-llama-70b}
     # tailnet names (MagicDNS) resolve through tailscaled on the host
     dns:
       - 100.100.100.100
