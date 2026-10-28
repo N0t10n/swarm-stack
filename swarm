@@ -1,0 +1,9 @@
+#!/bin/sh
+# usage: swarm "prompt"
+# env: SWARM_URL (http://<tailscale-name>:8787), SWARM_TOKEN, SWARM_SESSION (optional: set it to keep memory;
+#      unset = stateless, which is cheapest). needs curl + jq
+out=$(curl -sS --max-time 900 "$SWARM_URL/ask" \
+  -H "Authorization: Bearer $SWARM_TOKEN" -H 'content-type: application/json' \
+  -d "$(jq -n --arg p "$*" --arg s "${SWARM_SESSION:-}" '{prompt:$p} + (if $s == "" then {} else {session:$s} end)')")
+echo "$out" | jq -r '.answer // .detail'
+echo "$out" | jq -r 'select(.usage) | "[brain tokens] \(.usage | tostring)"' >&2

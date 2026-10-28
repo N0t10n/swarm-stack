@@ -1,0 +1,27 @@
+# model_name here must match the keys in models.yaml (except `brain`).
+# Together model IDs change: verify against https://api.together.ai/models
+model_list:
+  - model_name: brain
+    litellm_params:
+      model: anthropic/claude-opus-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: llama-70b
+    litellm_params:
+      model: together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo
+      api_key: os.environ/TOGETHERAI_API_KEY
+  - model_name: qwen-coder
+    litellm_params:
+      model: together_ai/Qwen/Qwen2.5-Coder-32B-Instruct
+      api_key: os.environ/TOGETHERAI_API_KEY
+  - model_name: deepseek-r1
+    litellm_params:
+      model: together_ai/deepseek-ai/DeepSeek-R1
+      api_key: os.environ/TOGETHERAI_API_KEY
+  - model_name: llama-8b
+    litellm_params:
+      model: together_ai/meta-llama/Llama-3.1-8B-Instruct-Turbo
+      api_key: os.environ/TOGETHERAI_API_KEY
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

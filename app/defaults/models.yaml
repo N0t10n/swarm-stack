@@ -1,0 +1,34 @@
+# Worker catalog. The whole file is shown to the brain, and the keys become the
+# allowed values of the `delegate` tool. `context` (tokens) caps how much file
+# content is injected. Numbers are approximate: edit to match what Together serves.
+llama-8b:
+  context: 128000
+  max_output: 4096
+  reasoning: none
+  cost: cheapest
+  best_for: [classification, extraction, summarizing short text, reformatting, bulk mechanical edits]
+  avoid: [multi-step logic, subtle code]
+
+llama-70b:
+  context: 128000
+  max_output: 4096
+  reasoning: low
+  cost: cheap
+  best_for: [general writing, summarizing long files, translation, first-draft analysis]
+  avoid: [hard math, deep debugging]
+
+qwen-coder:
+  context: 32000
+  max_output: 4096
+  reasoning: medium
+  cost: cheap
+  best_for: [code generation, refactors, code review, writing tests, reading source files]
+  avoid: [files over ~25k tokens, non-code tasks]
+
+deepseek-r1:
+  context: 128000
+  max_output: 8192
+  reasoning: high
+  cost: mid
+  best_for: [math, algorithmic problems, tricky debugging, step-by-step analysis]
+  avoid: [simple tasks (slow and verbose)]

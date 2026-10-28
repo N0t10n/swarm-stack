@@ -1,0 +1,40 @@
+name: version
+# Bumps pyproject.toml (+ compose image tags and x-casaos version) from the merged PR's branch name:
+#   feat/*   -> minor      hotfix/* -> patch      doc/*, chore/*, anything else -> no bump
+# Runs on staging (feature PRs) and main (hotfix PRs). Staging -> main merges carry the version already.
+on:
+  push:
+    branches: [staging, main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  bump:
+    # the release commit itself re-triggers this workflow; skip it
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release)') }}
+    runs-on: ubuntu-latest
+    steps:
+      # RELEASE_TOKEN (PAT of a repo admin) is what lets the push through the branch rulesets
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+      - uses: astral-sh/setup-uv@v6
+      - name: bump
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          head=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" --jq '.[0].head.ref // ""')
+          case "$head" in
+            feat/*)   level=minor ;;
+            hotfix/*) level=patch ;;
+            *) echo "no bump for '$head'"; exit 0 ;;
+          esac
+          uv version --bump "$level"
+          v=$(uv version --short)
+          sed -i -E "s#(swarm-orchestrator:)[0-9][^[:space:]]*#\1$v#g; s#^(  version: )\"[^\"]*\"#\1\"$v\"#" docker-compose.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore(release): v$v"
+          git push

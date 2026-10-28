@@ -1,0 +1,8 @@
+# Machines the agent may reach over SSH (use tailnet names or 100.x IPs).
+# The real permission boundary is the SSH user on the remote machine:
+# use a restricted user, and add the public key printed by `seed` to its authorized_keys.
+# exec: false = read/list only. true = the brain may run arbitrary commands there.
+laptop:
+  address: laptop.your-tailnet.ts.net
+  user: marcos
+  exec: false

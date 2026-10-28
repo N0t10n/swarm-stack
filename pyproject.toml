@@ -1,0 +1,8 @@
+[project]
+name = "swarm-orchestrator"
+version = "0.1.0"  # single source of truth: bumped by .github/workflows/version.yml
+requires-python = ">=3.12"
+dependencies = ["fastapi", "uvicorn", "openai", "pyyaml"]
+
+[tool.uv]
+package = false
