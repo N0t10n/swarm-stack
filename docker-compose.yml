@@ -11,27 +11,29 @@ services:
       - -c
       - |
         [ -f /config/litellm.yaml ] || cat > /config/litellm.yaml <<'EOF'
-        # Together model IDs change: verify against https://api.together.ai/models
+        # Together serverless IDs change often: list yours with
+        #   curl -s https://api.together.xyz/v1/models -H "Authorization: Bearer $TOGETHERAI_API_KEY"
+        # (non-serverless models fail with 'create a dedicated endpoint'; probe with a tiny call first)
         model_list:
           - model_name: brain
             litellm_params:
               model: anthropic/claude-opus-5-5
               api_key: os.environ/ANTHROPIC_API_KEY
-          - model_name: llama-70b
+          - model_name: glm-flash
             litellm_params:
-              model: together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo
+              model: together_ai/zai-org/GLM-5.3-Flash
               api_key: os.environ/TOGETHERAI_API_KEY
-          - model_name: qwen-coder
+          - model_name: gpt-oss-120b
             litellm_params:
-              model: together_ai/Qwen/Qwen2.5-Coder-32B-Instruct
+              model: together_ai/openai/gpt-oss-120b
               api_key: os.environ/TOGETHERAI_API_KEY
-          - model_name: deepseek-r1
+          - model_name: deepseek-flash
             litellm_params:
-              model: together_ai/deepseek-ai/DeepSeek-R1
+              model: together_ai/deepseek-ai/DeepSeek-V4.1-Flash
               api_key: os.environ/TOGETHERAI_API_KEY
-          - model_name: llama-8b
+          - model_name: qwen-9b
             litellm_params:
-              model: together_ai/meta-llama/Llama-3.1-8B-Instruct-Turbo
+              model: together_ai/Qwen/Qwen3.5-9B
               api_key: os.environ/TOGETHERAI_API_KEY
         general_settings:
           master_key: os.environ/LITELLM_MASTER_KEY
@@ -94,7 +96,7 @@ services:
       LITELLM_URL: http://litellm:4000/v1
       HERMES_API_KEY: ${HERMES_API_KEY:-${LITELLM_MASTER_KEY}}
       HERMES_BRAIN_MODEL: ${HERMES_BRAIN_MODEL:-brain}
-      HERMES_WORKER_MODEL: ${HERMES_WORKER_MODEL:-llama-70b}
+      HERMES_WORKER_MODEL: ${HERMES_WORKER_MODEL:-glm-flash}
     # tailnet names (MagicDNS) resolve through tailscaled on the host
     dns:
       - 100.100.100.100

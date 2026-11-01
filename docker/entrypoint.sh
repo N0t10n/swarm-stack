@@ -19,6 +19,6 @@ as_hermes hermes config set model.provider custom >/dev/null
 as_hermes hermes config set model.default "${HERMES_BRAIN_MODEL:-brain}" >/dev/null
 as_hermes hermes config set model.base_url "$LITELLM_URL" >/dev/null
 as_hermes hermes config set model.api_key "${HERMES_API_KEY:-}" >/dev/null
-as_hermes hermes config set delegation.model "${HERMES_WORKER_MODEL:-llama-70b}" >/dev/null
+as_hermes hermes config set delegation.model "${HERMES_WORKER_MODEL:-glm-flash}" >/dev/null
 
 exec runuser -u hermes -- env HOME=/home/hermes PATH="/home/hermes/.local/bin:$PATH" "$@"

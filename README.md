@@ -4,7 +4,7 @@ A [Hermes](https://github.com/NousResearch/hermes-agent) agent whose **brain is 
 
 ```
 you ──ssh (tailscale)──► server ──► hermes ──► LiteLLM ──► Anthropic (brain: Opus)
-                                       │                └─► Together.ai (subagents: llama-70b, ...)
+                                       │                └─► Together.ai (subagents: glm-flash, ...)
                                        └─ ssh <pc> over the tailnet to read your other machines
 ```
 
@@ -32,7 +32,7 @@ The agent runs `ssh <pc>` from inside the container. Either let the PC trust the
 
 ## Choosing models
 
-`litellm.yaml` (in the config dir, created on first run) defines `brain` and the workers. `HERMES_WORKER_MODEL` picks which one subagents use (default `llama-70b`). Together model IDs change: check them at api.together.ai/models.
+`litellm.yaml` (in the config dir, created on first run) defines `brain` and the workers. `HERMES_WORKER_MODEL` picks which one subagents use (default `glm-flash`). Together model IDs change: check them at api.together.ai/models.
 
 ## Releases
 
