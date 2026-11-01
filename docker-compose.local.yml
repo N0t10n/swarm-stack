@@ -1,0 +1,30 @@
+# Local testing only (not used by ZimaOS): maps /DATA/AppData/swarm/* into ./.data
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up
+# On Apple Silicon until the arm64 image is published, prefix with DOCKER_DEFAULT_PLATFORM=linux/amd64
+services:
+  seed:
+    volumes:
+      - type: bind
+        source: ./.data/config
+        target: /config
+  postgres:
+    volumes:
+      - type: bind
+        source: ./.data/postgres
+        target: /var/lib/postgresql/data
+  litellm:
+    ports:
+      - "4000:4000"  # admin UI + Playground at http://localhost:4000/ui
+    volumes:
+      - type: bind
+        source: ./.data/config
+        target: /config
+        read_only: true
+  orchestrator:
+    volumes:
+      - type: bind
+        source: ./.data/config
+        target: /config
+      - type: bind
+        source: ./.data/data
+        target: /data
