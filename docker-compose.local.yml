@@ -1,0 +1,32 @@
+# Local testing only (not used by ZimaOS): maps /DATA/AppData/swarm/* into ./.data and builds the hermes image.
+# Use it by adding to .env:  COMPOSE_FILE=docker-compose.yml:docker-compose.local.yml
+volumes:
+  hermes-data:
+
+services:
+  seed:
+    volumes:
+      - type: bind
+        source: ./.data/config
+        target: /config
+  postgres:
+    volumes:
+      - type: bind
+        source: ./.data/postgres
+        target: /var/lib/postgresql/data
+  litellm:
+    volumes:
+      - type: bind
+        source: ./.data/config
+        target: /config
+        read_only: true
+  hermes:
+    build: .
+    volumes:
+      # named volume: macOS bind mounts report 0755 on everything and Hermes refuses its own 0600 socket
+      - type: volume
+        source: hermes-data
+        target: /data/hermes
+      - type: bind
+        source: ./.data/ssh
+        target: /home/hermes/.ssh

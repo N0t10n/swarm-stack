@@ -33,7 +33,7 @@ jobs:
           esac
           uv version --bump "$level"
           v=$(uv version --short)
-          sed -i -E "s#(swarm-orchestrator:)[0-9][^[:space:]]*#\1$v#g; s#^(  version: )\"[^\"]*\"#\1\"$v\"#" docker-compose.yml
+          sed -i -E "s#(swarm-hermes:)[0-9][^[:space:]]*#\1$v#g; s#^(  version: )\"[^\"]*\"#\1\"$v\"#" docker-compose.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "chore(release): v$v"
