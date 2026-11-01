@@ -83,7 +83,7 @@ services:
 
 x-casaos:
   id: io.github.change-me.swarm
-  architectures: [amd64]
+  architectures: [amd64, arm64]
   version: "0.1.0"
   main: orchestrator
   author: marcos
