@@ -25,7 +25,7 @@ jobs:
         id: tags
         run: |
           v=$(uv version --short)
-          img=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/swarm-orchestrator
+          img=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/swarm-hermes
           tags="$img:latest,$img:sha-${GITHUB_SHA::7}"
           if docker buildx imagetools inspect "$img:$v" >/dev/null 2>&1; then
             echo "new=false" >> "$GITHUB_OUTPUT"
