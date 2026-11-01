@@ -90,7 +90,7 @@ services:
 
   # the agent: `docker exec -it -u hermes <container> hermes`
   hermes:
-    image: ghcr.io/n0t10n/swarm-hermes:0.1.0
+    image: ghcr.io/n0t10n/swarm-hermes:0.2.0
     restart: unless-stopped
     environment:
       LITELLM_URL: http://litellm:4000/v1
@@ -114,7 +114,7 @@ services:
 x-casaos:
   id: io.github.n0t10n.swarm
   architectures: [amd64]
-  version: "0.1.0"
+  version: "0.2.0"
   main: litellm
   author: marcos
   category: Developer

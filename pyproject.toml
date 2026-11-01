@@ -1,6 +1,6 @@
 [project]
 name = "swarm-hermes"
-version = "0.1.0"  # single source of truth: bumped by .github/workflows/version.yml
+version = "0.2.0"  # single source of truth: bumped by .github/workflows/version.yml
 requires-python = ">=3.12"
 dependencies = []
 
