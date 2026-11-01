@@ -95,7 +95,7 @@ x-casaos:
     en_US: Opus plans, cheap Together.ai models do the work
   description:
     en_US: LiteLLM gateway plus an orchestrator where a Claude Opus brain delegates to a swarm of cheaper models and reads your machines over SSH. Reach it through Tailscale.
-  icon: https://example.com/swarm/icon.png
-  thumbnail: https://example.com/swarm/thumbnail.png
+  icon: https://cdn.jsdelivr.net/gh/N0t10n/swarm-stack@main/assets/icon.svg
+  thumbnail: https://cdn.jsdelivr.net/gh/N0t10n/swarm-stack@main/assets/thumbnail.png
   index: /docs
   port_map: ${WEBUI_PORT:-8787}
