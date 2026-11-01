@@ -36,6 +36,7 @@ services:
     environment:
       DATABASE_URL: postgresql://litellm:litellm@postgres:5432/litellm
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       TOGETHERAI_API_KEY: ${TOGETHERAI_API_KEY}
     volumes:
